@@ -1,0 +1,123 @@
+import sys
+import selenium
+from selenium import webdriver
+from core import autenticate, send_message, read_dataframe
+
+from PyQt6.QtGui import QPalette, QColor, QTextBlock
+from PyQt6.QtWidgets import QWidget, QMainWindow, QApplication, QHBoxLayout, QVBoxLayout, QLineEdit, QPushButton, \
+    QFileDialog, QLabel, QPlainTextEdit, QProgressBar, QComboBox
+
+
+class Color(QWidget):
+
+    def __init__(self, color):
+        super(Color, self).__init__()
+        self.setAutoFillBackground(True)
+
+        palette = self.palette()
+        palette.setColor(QPalette.ColorRole.Window, QColor(color))
+        self.setPalette(palette)
+
+class MainWindow(QMainWindow):
+
+    def __init__(self, driver: selenium.webdriver):
+        super(MainWindow, self).__init__()
+        self.webdriver = driver
+        self.setWindowTitle("Simple Messenger")
+
+        self.contact_df = None
+
+        layout = QVBoxLayout()
+
+
+        layout1= QHBoxLayout()
+
+        self.file_path_selected = QLineEdit()
+        self.file_path_selected.textChanged.connect(self.load_data_frame)
+        layout1.addWidget(self.file_path_selected)
+
+        file_path_selector = QPushButton()
+        file_path_selector.setText("...")
+        file_path_selector.clicked.connect(self.open_file_selector_dialog)
+        layout1.addWidget(file_path_selector)
+
+        layout.addLayout(layout1)
+
+        layout2 = QVBoxLayout()
+        self.num_contacts_label = QLabel(f"Número de contatos: {0}")
+        layout.addWidget(self.num_contacts_label)
+
+        self.variables_label = QLabel(f"Variáveis: Nenhuma variável")
+        layout.addWidget(self.variables_label)
+
+        layout.addLayout(layout2)
+
+        self.template_editor = QPlainTextEdit()
+        self.template_editor.setDisabled(True)
+        self.template_editor.setPlaceholderText("Digite a mensagem a ser enviada\nAs variáveis serão substituidas "
+                                                "quando o texto for enviado.")
+        layout.addWidget(self.template_editor)
+
+        self.phone_number_column_name = QComboBox()
+        self.phone_number_column_name.setDisabled(True)
+        layout.addWidget(self.phone_number_column_name)
+
+        self.send_button = QPushButton()
+        self.send_button.setText("Enviar")
+        self.send_button.setDisabled(True)
+        self.send_button.clicked.connect(self.send)
+        layout.addWidget(self.send_button)
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setDisabled(True)
+        self.progress_bar.valueChanged.connect(self.phone_number_selected)
+        layout.addWidget(self.progress_bar)
+
+        widget = QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+
+    def open_file_selector_dialog(self):
+        dialog = QFileDialog()
+        dialog.setNameFilters(["CSV File (*.csv)", "Excel (*.xlsx)"])
+        if dialog.exec():
+            self.file_path_selected.setText(dialog.selectedFiles()[0])
+
+    def load_data_frame(self, text):
+        self.contact_df = read_dataframe(text)
+        self.num_contacts_label.setText(f"Número de contatos: {self.contact_df.shape[0]}")
+        self.variables_label.setText("Variáveis: " + ", ".join(map(lambda x: f"${x}", self.contact_df.columns)))
+        self.progress_bar.setMaximum(self.contact_df.shape[0])
+        self.phone_number_column_name.addItems(self.contact_df.columns.to_list())
+        self.template_editor.setDisabled(False)
+        self.progress_bar.setDisabled(False)
+        self.phone_number_column_name.setDisabled(False)
+
+    def phone_number_selected(self):
+        self.send_button.setDisabled(False)
+
+    def send(self):
+        text = self.template_editor.toPlainText()
+        send_message(self.webdriver, text, self.contact_df, lambda i: self.progress_bar.setValue(i + 1))
+
+    def closeEvent(self, event):
+        self.webdriver.quit()
+
+if __name__ == "__main__":
+    driver = None
+    try:
+        app = QApplication(sys.argv)
+
+        options = webdriver.ChromeOptions()
+        options.add_argument(f'--user-data-dir=./session/')
+        driver = webdriver.Chrome(options=options)
+
+        window = MainWindow(driver)
+
+        window.setMinimumSize(400, 400)
+
+        window.show()
+        app.exec()
+    except:
+        if driver:
+            driver.quit()

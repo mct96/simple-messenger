@@ -9,20 +9,19 @@ import re
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 
-options = webdriver.ChromeOptions()
-options.add_argument(f'--user-data-dir=./session/')
-driver = webdriver.Chrome(options=options)
-
-def autenticate():
+def autenticate(driver):
     driver.get("https://web.whatsapp.com/")
     while len(driver.find_elements(By.ID, "side")) == 0:
         time.sleep(1)
 
-def send_message_to_phone(phone, message):
+def send_message_to_phone(driver, phone, message):
     message = urllib.parse.quote(message)
     driver.get(f"https://web.whatsapp.com/send?phone={phone}&text={message}")
 
     while len(driver.find_elements(By.ID, "side")) == 0:
+        time.sleep(1)
+
+    while len(driver.find_elements(By.XPATH, '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]')) == 0:
         time.sleep(1)
 
     driver.find_element(By.XPATH, '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]').send_keys(Keys.ENTER)
@@ -35,6 +34,7 @@ def read_dataframe(filepath: str):
         df = pd.read_excel(filepath)
     else:
         raise FileNotFoundError(f"Not Found: {filepath}")
+
     return df
 
 def check_template(template: Template, columns):
@@ -57,23 +57,19 @@ def sanitize_phone_number(phone_number: str) -> str:
                            "zz = código do país e yy = ddd")
     return pn
 
-def send_message(template_text: str, contacts_df: pd.DataFrame):
+def send_message(driver, template_text: str, contacts_df: pd.DataFrame, phone_number_column="phone_number", counter_callback=None):
     template = Template(template_text)
 
     # Verify whether the template is correct
-    check_template(template, contacts_df.columns().to_list())
+    columns = contacts_df.columns.to_list()
+    check_template(template, columns)
+
+    contacts_df[phone_number_column] = contacts_df[phone_number_column].astype(str)
 
     for i, row in contacts_df.iterrows():
         text = template.substitute(**row.to_dict())
-        phone_number = sanitize_phone_number(row["phone_number"])
-        send_message_to_phone(phone_number, text)
-
-
-if __name__ == "__main__":
-    contacts_df = read_dataframe("test.csv")
-    text = "$nome, bom dia.\n Você precisa fazer a matrícula até o dia $data"
-
-# assert sanitize_phone_number("90000-9283") == "5565900009283"
-# assert sanitize_phone_number("(76) 90000-9283") == "5576900009283"
-# assert sanitize_phone_number("+99 (22) 90000-9283") == "9922900009283"
-# assert sanitize_phone_number("+99(22)90000-9283") == "9922900009283"
+        phone_number = row[phone_number_column]
+        phone_number = sanitize_phone_number(phone_number)
+        send_message_to_phone(driver, phone_number, text)
+        if counter_callback:
+            counter_callback(i)
