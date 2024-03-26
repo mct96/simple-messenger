@@ -11,6 +11,8 @@ from core import send_message, read_dataframe
 
 logger = logging.getLogger(__name__)
 
+FORMAT = '%(asctime)s %(message)'
+
 class Color(QWidget):
 
     def __init__(self, color):
@@ -113,7 +115,7 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     driver = None
     try:
-        logging.basicConfig(filename='simple-messager.log', level=logging.INFO)
+        logging.basicConfig(filename='simple-messager.log', filemode="a", level=logging.DEBUG)
         logger.info('application initialized')
 
         app = QApplication(sys.argv)
@@ -128,6 +130,6 @@ if __name__ == "__main__":
 
         window.show()
         app.exec()
-    except:
+    finally:
         if driver:
             driver.quit()
