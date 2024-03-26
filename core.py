@@ -81,12 +81,13 @@ def sanitize_phone_number(phone_number: str) -> str:
     return pn
 
 def get_object():
+    state = dict()
     try:
         if os.path.exists("data.json"):
             with open(f"data.json", "rt") as f:
-                return json.load(f)
-    except:
-        return dict()
+                state = json.load(f)
+    finally:
+        return state
 
 def save_object(state):
     with open("data.json", "wt") as f:

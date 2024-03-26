@@ -115,7 +115,7 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     driver = None
     try:
-        logging.basicConfig(filename='simple-messager.log', filemode="a", level=logging.DEBUG)
+        logging.basicConfig(filename='simple-messager.log', filemode="a", level=logging.INFO)
         logger.info('application initialized')
 
         app = QApplication(sys.argv)
