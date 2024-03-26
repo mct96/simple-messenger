@@ -3,7 +3,7 @@
 A simple application written in Python to send whatsapp text messengers to a list of users
 
 
-![screenshot](misc/sample)
+![screenshot](misc/sample.png)
 
 ### Usage
 
