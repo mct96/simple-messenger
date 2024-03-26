@@ -1,13 +1,18 @@
-from selenium import webdriver
-import urllib.parse
-import time
+import json
+import logging
+import os
 import random
-import pandas as pd
-from string import Template
 import re
+import time
+import urllib.parse
+import urllib.parse
+from string import Template
 
+import pandas as pd
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
+
+logger = logging.getLogger(__name__)
 
 def autenticate(driver):
     driver.get("https://web.whatsapp.com/")
@@ -57,19 +62,48 @@ def sanitize_phone_number(phone_number: str) -> str:
                            "zz = código do país e yy = ddd")
     return pn
 
-def send_message(driver, template_text: str, contacts_df: pd.DataFrame, phone_number_column="phone_number", counter_callback=None):
+def get_object():
+    try:
+        if os.path.exists("data.json"):
+            with open(f"data.json", "rt") as f:
+                return json.load(f)
+    except:
+        return dict()
+
+def save_object(state):
+    with open("data.json", "wt") as f:
+        json.dump(state, f)
+
+def load_previous_state(progress_entry_id: str):
+    state = get_object()
+    return 0 if progress_entry_id not in state else state[progress_entry_id]
+
+def save_state(progress_entry_id: str, i):
+    state = get_object()
+    state[progress_entry_id] = i
+    save_object(state)
+
+
+def send_message(driver, template_text: str, contacts_df: pd.DataFrame, phone_number_column="phone_number",
+                 counter_callback=None, save_progress=False, progress_entry_id=None):
     template = Template(template_text)
 
     # Verify whether the template is correct
     columns = contacts_df.columns.to_list()
     check_template(template, columns)
 
-    contacts_df[phone_number_column] = contacts_df[phone_number_column].astype(str)
-
+    # contacts_df[phone_number_column] = contacts_df[phone_number_column].astype(str)
+    j = load_previous_state(progress_entry_id)
     for i, row in contacts_df.iterrows():
-        text = template.substitute(**row.to_dict())
-        phone_number = row[phone_number_column]
-        phone_number = sanitize_phone_number(phone_number)
-        send_message_to_phone(driver, phone_number, text)
         if counter_callback:
             counter_callback(i)
+
+        if i < j: continue
+
+        text = template.substitute(**row.to_dict())
+        phone_number = row[phone_number_column]
+        phone_number = sanitize_phone_number(str(phone_number))
+        # send_message_to_phone(driver, phone_number, text)
+
+        if save_progress:
+            save_state(progress_entry_id, int(i) + 1)

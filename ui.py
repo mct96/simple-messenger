@@ -1,12 +1,15 @@
+import logging
 import sys
-import selenium
-from selenium import webdriver
-from core import autenticate, send_message, read_dataframe
 
-from PyQt6.QtGui import QPalette, QColor, QTextBlock
+import selenium
+from PyQt6.QtGui import QPalette, QColor
 from PyQt6.QtWidgets import QWidget, QMainWindow, QApplication, QHBoxLayout, QVBoxLayout, QLineEdit, QPushButton, \
     QFileDialog, QLabel, QPlainTextEdit, QProgressBar, QComboBox
+from selenium import webdriver
 
+from core import send_message, read_dataframe
+
+logger = logging.getLogger(__name__)
 
 class Color(QWidget):
 
@@ -60,6 +63,8 @@ class MainWindow(QMainWindow):
 
         self.phone_number_column_name = QComboBox()
         self.phone_number_column_name.setDisabled(True)
+        self.phone_number_column_name.setPlaceholderText("Indique a coluna com o número de telefone")
+        self.phone_number_column_name.currentIndexChanged.connect(self.phone_number_selected)
         layout.addWidget(self.phone_number_column_name)
 
         self.send_button = QPushButton()
@@ -69,8 +74,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.send_button)
 
         self.progress_bar = QProgressBar()
-        self.progress_bar.setDisabled(True)
-        self.progress_bar.valueChanged.connect(self.phone_number_selected)
         layout.addWidget(self.progress_bar)
 
         widget = QWidget()
@@ -98,14 +101,21 @@ class MainWindow(QMainWindow):
 
     def send(self):
         text = self.template_editor.toPlainText()
-        send_message(self.webdriver, text, self.contact_df, lambda i: self.progress_bar.setValue(i + 1))
+        send_message(self.webdriver, text, contacts_df=self.contact_df,
+                     counter_callback=lambda i: self.progress_bar.setValue(i + 1),
+                     save_progress=True,
+                     progress_entry_id=self.file_path_selected.text())
 
     def closeEvent(self, event):
+        logger.info('application closed')
         self.webdriver.quit()
 
 if __name__ == "__main__":
     driver = None
     try:
+        logging.basicConfig(filename='simple-messager.log', level=logging.INFO)
+        logger.info('application initialized')
+
         app = QApplication(sys.argv)
 
         options = webdriver.ChromeOptions()
