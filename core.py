@@ -140,9 +140,10 @@ def send_message(driver, template_text: str, contacts_df: pd.DataFrame, phone_nu
         phone_number = row[phone_number_column]
         try:
             phone_number = sanitize_phone_number(str(phone_number))
+            send_message_to_phone(driver, phone_number, text)
         except:
             continue
-        send_message_to_phone(driver, phone_number, text)
+
 
         if save_progress:
             save_state(progress_entry_id, int(i) + 1)
