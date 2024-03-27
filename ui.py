@@ -125,7 +125,7 @@ if __name__ == "__main__":
     if sys.platform == 'linux':
         options.add_argument(f'--user-data-dir=./session/')
     else:
-        options.add_argument(r'--user-data-dir=.\session')
+        options.add_argument(r'--user-data-dir=\session')
     driver = webdriver.Chrome(options=options)
     autenticate(driver)
 

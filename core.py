@@ -31,6 +31,7 @@ def send_message_to_phone(driver, phone, message):
     logger.info("waiting page load")
     while len(driver.find_elements(By.ID, "side")) == 0:
         time.sleep(1)
+
     logger.info("page load finished")
 
     logger.info("searching by input field")
