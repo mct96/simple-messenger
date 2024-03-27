@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QWidget, QMainWindow, QApplication, QHBoxLayout, QVB
     QFileDialog, QLabel, QPlainTextEdit, QProgressBar, QComboBox
 from selenium import webdriver
 
-from core import send_message, read_dataframe
+from core import send_message, read_dataframe, autenticate
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +105,7 @@ class MainWindow(QMainWindow):
         text = self.template_editor.toPlainText()
         send_message(self.webdriver, text, contacts_df=self.contact_df,
                      counter_callback=lambda i: self.progress_bar.setValue(i + 1),
+                     phone_number_column=self.phone_number_column_name.currentText(),
                      save_progress=True,
                      progress_entry_id=self.file_path_selected.text())
 
@@ -114,22 +115,25 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     driver = None
-    try:
-        logging.basicConfig(filename='simple-messager.log', filemode="a", level=logging.INFO)
-        logger.info('application initialized')
+    logging.basicConfig(filename='simple-messager.log', filemode="a", level=logging.INFO)
+    logger.info('application initialized')
 
-        app = QApplication(sys.argv)
+    app = QApplication(sys.argv)
 
-        options = webdriver.ChromeOptions()
+    options = webdriver.ChromeOptions()
+
+    if sys.platform == 'linux':
         options.add_argument(f'--user-data-dir=./session/')
-        driver = webdriver.Chrome(options=options)
+    else:
+        options.add_argument(r'--user-data-dir=.\session')
+    driver = webdriver.Chrome(options=options)
+    autenticate(driver)
 
-        window = MainWindow(driver)
+    window = MainWindow(driver)
 
-        window.setMinimumSize(400, 400)
+    window.setMinimumSize(400, 400)
 
-        window.show()
-        app.exec()
-    finally:
-        if driver:
-            driver.quit()
+    window.show()
+
+    app.exec()
+    driver.quit()

@@ -41,7 +41,7 @@ def send_message_to_phone(driver, phone, message):
     logger.info("pressing enter")
     driver.find_element(By.XPATH, '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]').send_keys(Keys.ENTER)
     logger.info("message send")
-    t = random.randint(7, 11)
+    t = random.randint(3, 9)
     time.sleep(t)
     logger.info("waiting a random time of {}".format(t))
 
@@ -125,7 +125,7 @@ def send_message(driver, template_text: str, contacts_df: pd.DataFrame, phone_nu
         text = template.substitute(**row.to_dict())
         phone_number = row[phone_number_column]
         phone_number = sanitize_phone_number(str(phone_number))
-        # send_message_to_phone(driver, phone_number, text)
+        send_message_to_phone(driver, phone_number, text)
 
         if save_progress:
             save_state(progress_entry_id, int(i) + 1)
