@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QWidget, QMainWindow, QApplication, QHBoxLayout, QVB
     QFileDialog, QLabel, QPlainTextEdit, QProgressBar, QComboBox
 from selenium import webdriver
 from multiprocessing import Process
+from threading import Thread
 
 from core import send_message, read_dataframe, autenticate
 
@@ -107,7 +108,7 @@ class MainWindow(QMainWindow):
 
     def send(self):
         text = self.template_editor.toPlainText()
-        this.process = Process(target=send_message,
+        self.thread = Thread(target=send_message,
                         args=(
                             self.webdriver,
                             text,
@@ -115,10 +116,11 @@ class MainWindow(QMainWindow):
                             self.phone_number_column_name.currentText(),
                             lambda i: self.progress_bar.setValue(i + 1),
                             True,
-                            self.file_path_selected.text()),
-                        deamon=True)
+                            self.file_path_selected.text()))
 
-        this.process.run()
+        self.thread.deamon = True
+
+        self.thread.start()
         
         # send_message(self.webdriver, text, contacts_df=self.contact_df,
         #              counter_callback=lambda i: self.progress_bar.setValue(i + 1),
@@ -128,10 +130,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         logger.info('application closed')
-        self.webdriver.quit()
-        if this.process.is_alive():
-            this.process.terminate()
-        
+        self.webdriver.quit()        
 
 if __name__ == "__main__":
     driver = None
