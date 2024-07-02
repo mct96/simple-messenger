@@ -6,6 +6,7 @@ from PyQt6.QtGui import QPalette, QColor
 from PyQt6.QtWidgets import QWidget, QMainWindow, QApplication, QHBoxLayout, QVBoxLayout, QLineEdit, QPushButton, \
     QFileDialog, QLabel, QPlainTextEdit, QProgressBar, QComboBox
 from selenium import webdriver
+from threading import Thread
 
 from core import send_message, read_dataframe, autenticate
 
@@ -34,6 +35,9 @@ class MainWindow(QMainWindow):
 
         layout = QVBoxLayout()
 
+        self.file_path_label = QLabel(f"Selecione o arquivo .csv contendo o número do whatsapp dos destinatários")
+        layout.addWidget(self.file_path_label)
+
 
         layout1= QHBoxLayout()
 
@@ -49,7 +53,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(layout1)
 
         layout2 = QVBoxLayout()
-        self.num_contacts_label = QLabel(f"Número de contatos: {0}")
+        self.num_contacts_label = QLabel(f"Número de contatos encontrados: {0}")
         layout.addWidget(self.num_contacts_label)
 
         self.variables_label = QLabel(f"Variáveis: Nenhuma variável")
@@ -103,11 +107,22 @@ class MainWindow(QMainWindow):
 
     def send(self):
         text = self.template_editor.toPlainText()
-        send_message(self.webdriver, text, contacts_df=self.contact_df,
-                     counter_callback=lambda i: self.progress_bar.setValue(i + 1),
-                     phone_number_column=self.phone_number_column_name.currentText(),
-                     save_progress=True,
-                     progress_entry_id=self.file_path_selected.text())
+        thread = Thread(target=send_message,
+                        args=(
+                            self.webdriver,
+                            text,
+                            self.contact_df,
+                            self.phone_number_column_name.currentText(),
+                            lambda i: self.progress_bar.setValue(i + 1),
+                            True,
+                            self.file_path_selected.text()))
+        thread.run()
+        
+        # send_message(self.webdriver, text, contacts_df=self.contact_df,
+        #              counter_callback=lambda i: self.progress_bar.setValue(i + 1),
+        #              phone_number_column=self.phone_number_column_name.currentText(),
+        #              save_progress=True,
+        #              progress_entry_id=self.file_path_selected.text())
 
     def closeEvent(self, event):
         logger.info('application closed')
