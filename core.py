@@ -119,6 +119,7 @@ def save_state(progress_entry_id: str, i):
 
 def send_message(driver, template_text: str, contacts_df: pd.DataFrame, phone_number_column="phone_number",
                  counter_callback=None, save_progress=False, progress_entry_id=None):
+    
     template = Template(template_text)
 
     logger.info("there are {} contacts".format(len(contacts_df)))
@@ -136,9 +137,9 @@ def send_message(driver, template_text: str, contacts_df: pd.DataFrame, phone_nu
 
         if i < j: continue
 
-        text = template.substitute(**row.to_dict())
-        phone_number = row[phone_number_column]
         try:
+            text = template.substitute(**row.to_dict())
+            phone_number = row[phone_number_column]
             phone_number = sanitize_phone_number(str(phone_number))
             send_message_to_phone(driver, phone_number, text)
         except:
