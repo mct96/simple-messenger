@@ -142,6 +142,8 @@ def send_message(driver, template_text: str, contacts_df: pd.DataFrame, phone_nu
             phone_number = row[phone_number_column]
             phone_number = sanitize_phone_number(str(phone_number))
             send_message_to_phone(driver, phone_number, text)
+        except KeyboardInterrupt as e:
+            break
         except:
             continue
 
