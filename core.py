@@ -45,15 +45,15 @@ def send_message_to_phone(driver, phone, message):
     logger.info("page load finished")
 
     logger.info("searching by input field")
-    if find_by_timeout(driver, By.XPATH, '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]'):
+    if find_by_timeout(driver, By.XPATH, '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[2]/button'):
         logger.info("Timeout")
         return
-    # while len(driver.find_elements(By.XPATH, '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]')) == 0:
-    #     time.sleep(1)
-
+    
     logger.info("input field found")
     logger.info("pressing enter")
-    driver.find_element(By.XPATH, '//*[@id="main"]/footer/div[1]/div/span[2]/div/div[2]/div[1]/div/div[1]').send_keys(Keys.ENTER)
+
+    driver.find_element(By.XPATH, '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[2]/button').click()
+
     logger.info("message send")
     t = random.randint(3, 9)
     time.sleep(t)
